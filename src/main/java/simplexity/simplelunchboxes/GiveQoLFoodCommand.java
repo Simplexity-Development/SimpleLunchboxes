@@ -12,6 +12,9 @@ public class GiveQoLFoodCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
         player.getInventory().addItem(LunchboxInventoryHandler.getInstance().newLunchbox(1));
+        player.getInventory().addItem(LunchboxInventoryHandler.getInstance().newGluttonousLunchbox(1));
+        player.getInventory().addItem(LunchboxInventoryHandler.getInstance().newEnderLunchbox());
+        player.getInventory().addItem(LunchboxInventoryHandler.getInstance().newGluttonousEnderLunchbox());
         return true;
     }
 
