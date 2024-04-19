@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 
+// TODO: Divide up class into more smaller and specialized classes (ie: LunchboxHandler and LunchboxInventoryHandler).
 public class LunchboxInventoryHandler {
 
     public static final NamespacedKey uuidNsk = new NamespacedKey(SimpleLunchboxes.namespace, "uuid");
@@ -65,16 +66,50 @@ public class LunchboxInventoryHandler {
         return true;
     }
 
+    private Inventory loadInventory(UUID uuid) {
+        if (openInventories.containsKey(uuid)) return openInventories.get(uuid);
+        return createInventory(uuid);
+    }
+
+    private Inventory createInventory(UUID uuid) {
+        ConfigurationSection items = getLunchboxItems(uuid);
+
+        // TODO: Make name configurable.
+        // TODO: Make Tier Slots configurable (ie Tier 1 has only 3 available slots).
+        Inventory inv = Bukkit.createInventory(null, getLunchboxTier(uuid)*9, Component.text("Lunchbox"));
+
+        for (String key : items.getKeys(false)) {
+            int position = Integer.parseInt(key);
+            ItemStack itemStack = items.getItemStack(key);
+            if (position >= inv.getSize()) {
+                SimpleLunchboxes.getPlugin().getLogger().warning("Lunchbox (UUID: " + uuid + ") attempted to place an item stack in position " + position + " but the lunchbox is too small.");
+                continue;
+            }
+            inv.setItem(position, itemStack);
+        }
+
+        openInventories.put(uuid, inv);
+        return inv;
+    }
+
     public ItemStack newLunchbox(int tier) {
-        ItemStack lunchbox = SimpleLunchboxes.foodItem.asOne();
+        ItemStack lunchbox = SimpleLunchboxes.lunchboxItem.asOne();
         initializeLunchbox(lunchbox, tier);
         return lunchbox;
     }
 
     public ItemStack newGluttonousLunchbox(int tier) {
-        ItemStack lunchbox = SimpleLunchboxes.gluttonousFoodItem.asOne();
+        ItemStack lunchbox = SimpleLunchboxes.gluttonousLunchboxItem.asOne();
         initializeLunchbox(lunchbox, tier);
         return lunchbox;
+    }
+
+    public ItemStack newEnderLunchbox() {
+        return SimpleLunchboxes.enderLunchboxItem.asOne();
+    }
+
+    public ItemStack newGluttonousEnderLunchbox() {
+        return SimpleLunchboxes.gluttonousEnderLunchboxItem.asOne();
     }
 
     private void initializeLunchbox(ItemStack lunchbox, int tier) {
@@ -87,25 +122,42 @@ public class LunchboxInventoryHandler {
         setLunchboxTier(uuid, tier);
     }
 
+    public boolean isCustomItem(@Nullable ItemStack item) {
+        if (item == null) return false;
+
+        PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+
+        return container.has(LunchboxListeners.lunchboxNsk) ||
+                container.has(LunchboxListeners.enderLunchboxNsk);
+    }
+
     public boolean isLunchbox(@Nullable ItemStack item) {
         if (item == null) return false;
 
-        ItemMeta meta = item.getItemMeta();
-        PersistentDataContainer container = meta.getPersistentDataContainer();
+        PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 
-        if (!container.has(LunchboxListeners.lunchboxNsk)) return false;
-        if (!container.has(uuidNsk)) container.set(uuidNsk, PersistentDataType.STRING, UUID.randomUUID().toString()); // Should not need
+        return container.has(LunchboxListeners.lunchboxNsk);
+    }
 
-        item.setItemMeta(meta);
-        return true;
+    public boolean isEnderLunchbox(@Nullable ItemStack item) {
+        if (item == null) return false;
+
+        PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+
+        return container.has(LunchboxListeners.enderLunchboxNsk);
     }
 
     public void handleEating(@NotNull PlayerItemConsumeEvent event) {
         ItemStack item = event.getItem();
-        if (!isLunchbox(item)) return;
+        if (isLunchbox(item)) handleEatingLunchbox(event);
+        if (isEnderLunchbox(item)) handleEatingEnderLunchbox(event);
+    }
+
+    private void handleEatingLunchbox(@NotNull PlayerItemConsumeEvent event) {
+        ItemStack item = event.getItem();
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
         assert uuidString != null;
-        ItemStack food = selectItem(UUID.fromString(uuidString));
+        ItemStack food = selectLunchboxFood(UUID.fromString(uuidString));
         if (food == null) {
             event.setCancelled(true);
             return;
@@ -114,13 +166,24 @@ public class LunchboxInventoryHandler {
         event.setReplacement(item);
     }
 
-    public @Nullable ItemStack selectItem(@NotNull UUID uuid) {
+    private void handleEatingEnderLunchbox(@NotNull PlayerItemConsumeEvent event) {
+        ItemStack item = event.getItem();
+        ItemStack food = selectEnderFood(event.getPlayer());
+        if (food == null) {
+            event.setCancelled(true);
+            return;
+        }
+        event.setItem(food);
+        event.setReplacement(item);
+    }
+
+    private @Nullable ItemStack selectLunchboxFood(@NotNull UUID uuid) {
         if (openInventories.containsKey(uuid)) {
             Inventory inventory = openInventories.get(uuid);
             for (ItemStack item : inventory.getContents()) {
                 if (item == null) continue;
                 if (!item.getType().isEdible()) continue;
-                if (item.getItemMeta().getPersistentDataContainer().has(LunchboxListeners.lunchboxNsk)) continue;
+                if (isCustomItem(item)) continue;
 
                 item.subtract();
                 return item.asOne();
@@ -137,7 +200,7 @@ public class LunchboxInventoryHandler {
                 ItemStack item = items.getItemStack(key);
                 if (item == null) continue;
                 if (!item.getType().isEdible()) continue;
-                if (item.getItemMeta().getPersistentDataContainer().has(LunchboxListeners.lunchboxNsk)) continue;
+                if (isCustomItem(item)) continue;
 
                 item.subtract();
                 items.set(key, item);
@@ -148,46 +211,20 @@ public class LunchboxInventoryHandler {
         return null;
     }
 
-    public void closeLunchbox(Inventory inv) {
-        if (!isLunchboxInventory(inv)) return;
-        if (inv.getViewers().size() > 1) return;    // (?) Viewers == 1 when last person is closing the inventory.
-        UUID uuid = null;
-        for (UUID search : openInventories.keySet()) {
-            if (openInventories.get(search).equals(inv)) {
-                uuid = search;
-                break;
-            }
+    private @Nullable ItemStack selectEnderFood(@NotNull Player player) {
+        for (ItemStack item : player.getEnderChest().getContents()) {
+            if (item == null) continue;
+            if (!item.getType().isEdible()) continue;
+            if (isCustomItem(item)) continue;
+
+            item.subtract();
+            return item.asOne();
         }
-        saveInventory(inv, uuid);
+        return null;
     }
 
     public boolean isLunchboxInventory(Inventory inv) {
         return openInventories.containsValue(inv);
-    }
-
-    private Inventory loadInventory(UUID uuid) {
-        if (openInventories.containsKey(uuid)) return openInventories.get(uuid);
-        return createInventory(uuid);
-    }
-
-    private Inventory createInventory(UUID uuid) {
-        ConfigurationSection items = getLunchboxItems(uuid);
-
-        // TODO: Make name configurable.
-        Inventory inv = Bukkit.createInventory(null, getLunchboxTier(uuid)*9, Component.text("Lunchbox"));
-
-        for (String key : items.getKeys(false)) {
-            int position = Integer.parseInt(key);
-            ItemStack itemStack = items.getItemStack(key);
-            if (position >= inv.getSize()) {
-                SimpleLunchboxes.getPlugin().getLogger().warning("Lunchbox (UUID: " + uuid + ") attempted to place an item stack in position " + position + " but the lunchbox is too small.");
-                continue;
-            }
-            inv.setItem(position, itemStack);
-        }
-
-        openInventories.put(uuid, inv);
-        return inv;
     }
 
     private @NotNull ConfigurationSection getLunchbox(@NotNull UUID uuid) {
@@ -255,6 +292,19 @@ public class LunchboxInventoryHandler {
     public void reloadYml() {
         try { yml.load(dataFile); }
         catch (IOException | InvalidConfigurationException e) { e.printStackTrace(); }
+    }
+
+    public void closeLunchbox(Inventory inv) {
+        if (!isLunchboxInventory(inv)) return;
+        if (inv.getViewers().size() > 1) return;    // (?) Viewers == 1 when last person is closing the inventory.
+        UUID uuid = null;
+        for (UUID search : openInventories.keySet()) {
+            if (openInventories.get(search).equals(inv)) {
+                uuid = search;
+                break;
+            }
+        }
+        saveInventory(inv, uuid);
     }
 
     public void closeAll() {

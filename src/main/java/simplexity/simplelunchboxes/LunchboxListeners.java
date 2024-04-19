@@ -10,7 +10,9 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 
 public class LunchboxListeners implements Listener {
 
+    // TODO: Consolidate NSKs to a utility class, especially cause they are not used in this class anymore.
     public static final NamespacedKey lunchboxNsk = new NamespacedKey(SimpleLunchboxes.namespace, "lunchbox");
+    public static final NamespacedKey enderLunchboxNsk = new NamespacedKey(SimpleLunchboxes.namespace, "ender_lunchbox");
 
     @EventHandler
     public void onEat(PlayerItemConsumeEvent event) {
