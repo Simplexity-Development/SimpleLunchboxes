@@ -29,7 +29,7 @@ public class LunchboxInventory extends CustomInventory {
 
     @Override
     public boolean openInventory(@Nullable ItemStack item, @NotNull Player player) {
-        if (!isLunchbox(item)) return false;
+        if (!LunchboxItem.getInstance().isThisItem(item)) return false;
         assert item != null;
 
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
@@ -54,8 +54,9 @@ public class LunchboxInventory extends CustomInventory {
                 if (!item.getType().isEdible()) continue;
                 if (CustomItemUtil.isCustomItem(item)) continue;
 
+                ItemStack returnItem = item.asOne();
                 item.subtract();
-                return item.asOne();
+                return returnItem;
             }
         }
         else {
@@ -71,10 +72,11 @@ public class LunchboxInventory extends CustomInventory {
                 if (!item.getType().isEdible()) continue;
                 if (CustomItemUtil.isCustomItem(item)) continue;
 
+                ItemStack returnItem = item.asOne();
                 item.subtract();
                 items.set(key, item);
                 saveYml();
-                return item.asOne();
+                return returnItem;
             }
         }
         return null;

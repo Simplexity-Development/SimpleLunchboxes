@@ -49,8 +49,9 @@ public class PotionSashInventory extends CustomInventory {
                 if (item.getType() != Material.POTION) continue;
                 if (CustomItemUtil.isCustomItem(item)) continue;
 
+                ItemStack returnItem = item.asOne();
                 item.subtract();
-                return item.asOne();
+                return returnItem;
             }
         }
         else {
@@ -66,10 +67,11 @@ public class PotionSashInventory extends CustomInventory {
                 if (item.getType() != Material.POTION) continue;
                 if (CustomItemUtil.isCustomItem(item)) continue;
 
+                ItemStack returnItem = item.asOne();
                 item.subtract();
                 items.set(key, item);
                 saveYml();
-                return item.asOne();
+                return returnItem;
             }
         }
         return null;

@@ -43,12 +43,12 @@ public class PotionSashItem extends CustomItem {
         ItemStack item = event.getItem();
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
         assert uuidString != null;
-        ItemStack food = PotionSashInventory.getInstance().selectPotion(UUID.fromString(uuidString));
-        if (food == null) {
+        ItemStack potion = PotionSashInventory.getInstance().selectPotion(UUID.fromString(uuidString));
+        if (potion == null) {
             event.setCancelled(true);
             return;
         }
-        event.setItem(food);
+        event.setItem(potion);
         event.setReplacement(item);
     }
 

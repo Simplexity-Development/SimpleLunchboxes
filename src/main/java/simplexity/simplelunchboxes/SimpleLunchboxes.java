@@ -8,6 +8,7 @@ import simplexity.simplelunchboxes.item.EnderLunchboxItem;
 import simplexity.simplelunchboxes.item.LunchboxItem;
 import simplexity.simplelunchboxes.item.PotionSashItem;
 import simplexity.simplelunchboxes.listener.LunchboxListeners;
+import simplexity.simplelunchboxes.listener.PotionSashListeners;
 
 public final class SimpleLunchboxes extends JavaPlugin {
 
@@ -20,6 +21,7 @@ public final class SimpleLunchboxes extends JavaPlugin {
         plugin = this;
         miniMessage = MiniMessage.miniMessage();
         this.getServer().getPluginManager().registerEvents(new LunchboxListeners(), this);
+        this.getServer().getPluginManager().registerEvents(new PotionSashListeners(), this);
         this.getCommand("giveqolfood").setExecutor(new GiveQoLFoodCommand());
         constructCustomItems();
     }

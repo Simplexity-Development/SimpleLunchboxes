@@ -8,29 +8,27 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
-import simplexity.simplelunchboxes.item.EnderLunchboxItem;
-import simplexity.simplelunchboxes.item.LunchboxItem;
+import simplexity.simplelunchboxes.inventory.PotionSashInventory;
+import simplexity.simplelunchboxes.item.PotionSashItem;
 
-public class LunchboxListeners implements Listener {
+public class PotionSashListeners implements Listener {
 
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent event) {
         ItemStack item = event.getItem();
-        if (LunchboxItem.getInstance().isThisItem(item)) LunchboxItem.getInstance().handleConsumption(event);
-        if (EnderLunchboxItem.getInstance().isThisItem(item)) EnderLunchboxItem.getInstance().handleConsumption(event);
+        if (PotionSashItem.getInstance().isThisItem(item)) PotionSashItem.getInstance().handleConsumption(event);
     }
 
     @EventHandler
     public void onSneakUse(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (!event.getPlayer().isSneaking()) return;
-        boolean success = LunchboxInventory.getInstance().openInventory(event.getItem(), event.getPlayer());
+        boolean success = PotionSashInventory.getInstance().openInventory(event.getItem(), event.getPlayer());
         if (success) event.setCancelled(true);
     }
 
     @EventHandler
-    public void onLunchboxClose(InventoryCloseEvent event) {
-        LunchboxInventory.getInstance().closeInventory(event.getInventory());
+    public void onPotionSashClose(InventoryCloseEvent event) {
+        PotionSashInventory.getInstance().closeInventory(event.getInventory());
     }
-
 }

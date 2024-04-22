@@ -144,7 +144,6 @@ public abstract class CustomInventory {
                 break;
             }
         }
-        inv.close();
         saveInventory(inv, uuid);
         openInventories.remove(uuid);
     }
@@ -159,7 +158,7 @@ public abstract class CustomInventory {
         ConfigurationSection items = getInventoryItems(uuid);
         int index = 0;
         for (ItemStack itemStack : inv.getContents()) {
-            if (itemStack == null) {
+            if (itemStack == null || itemStack.getType().isAir()) {
                 index++;
                 continue;
             }
