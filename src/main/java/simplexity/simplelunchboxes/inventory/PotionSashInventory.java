@@ -69,6 +69,7 @@ public class PotionSashInventory extends CustomInventory {
 
                 ItemStack returnItem = item.asOne();
                 item.subtract();
+                if (item.getType().isEmpty()) item = null;
                 items.set(key, item);
                 saveYml();
                 return returnItem;

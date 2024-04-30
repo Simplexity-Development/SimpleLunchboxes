@@ -158,7 +158,7 @@ public abstract class CustomInventory {
         ConfigurationSection items = getInventoryItems(uuid);
         int index = 0;
         for (ItemStack itemStack : inv.getContents()) {
-            if (itemStack == null || itemStack.getType().isAir()) {
+            if (itemStack == null || itemStack.getType().isEmpty()) {
                 index++;
                 continue;
             }
