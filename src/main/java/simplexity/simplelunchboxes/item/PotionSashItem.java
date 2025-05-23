@@ -66,7 +66,7 @@ public class PotionSashItem extends CustomItem {
         ItemMeta potionItemMeta = potionSashItem.getItemMeta();
         potionItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
         potionItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("Potion Sash"));
-        potionItemMeta.setCustomModelData(100); // TODO: Custom Model Data Stuff
+        // TODO: Custom Model Data Stuff
         potionSashItem.setItemMeta(potionItemMeta);
     }
 }

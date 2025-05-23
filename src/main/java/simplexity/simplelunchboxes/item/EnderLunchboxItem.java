@@ -55,7 +55,7 @@ public class EnderLunchboxItem extends CustomItem {
         ItemMeta enderLunchboxItemMeta = enderLunchboxItem.getItemMeta();
         enderLunchboxItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
         enderLunchboxItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("Ender Lunchbox"));
-        enderLunchboxItemMeta.setCustomModelData(101); // TODO: Custom Model Data Stuff
+        // TODO: Custom Model Data Stuff
         enderLunchboxItem.setItemMeta(enderLunchboxItemMeta);
 
         // Gluttonous Ender Lunchbox
@@ -63,7 +63,7 @@ public class EnderLunchboxItem extends CustomItem {
         ItemMeta enderGluttonousLunchboxItemMeta = gluttonousEnderLunchboxItem.getItemMeta();
         enderGluttonousLunchboxItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
         enderGluttonousLunchboxItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("<aqua>Gluttonous Ender Lunchbox</aqua>"));
-        enderGluttonousLunchboxItemMeta.setCustomModelData(101); // TODO: Custom Model Data Stuff
+        // TODO: Custom Model Data Stuff
         gluttonousEnderLunchboxItem.setItemMeta(enderGluttonousLunchboxItemMeta);
     }
 }

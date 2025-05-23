@@ -84,8 +84,7 @@ public abstract class CustomInventory {
         UUID uuid = (existing_uuid == null ? UUID.randomUUID() : existing_uuid);
         meta.getPersistentDataContainer().set(uuidNsk, PersistentDataType.STRING, uuid.toString());
         customItem.setItemMeta(meta);
-        if (tier > 6) tier = 6;
-        if (tier < 1) tier = 1;
+        tier = Math.clamp(tier, 1, 6);
         setInventoryTier(uuid, tier);
     }
 
@@ -158,7 +157,7 @@ public abstract class CustomInventory {
         ConfigurationSection items = getInventoryItems(uuid);
         int index = 0;
         for (ItemStack itemStack : inv.getContents()) {
-            if (itemStack == null || itemStack.getType().isEmpty()) {
+            if (itemStack == null || itemStack.getType().isAir()) {
                 index++;
                 continue;
             }

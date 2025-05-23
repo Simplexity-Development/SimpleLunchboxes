@@ -1,7 +1,7 @@
 name: SimpleLunchboxes
 version: '${project.version}'
 main: simplexity.simplelunchboxes.SimpleLunchboxes
-api-version: '1.20.5'
+api-version: '1.21'
 commands:
   giveqolfood:
     description: "Testing command for Simple QoL Food"
