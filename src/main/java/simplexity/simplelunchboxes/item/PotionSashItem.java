@@ -9,6 +9,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.LocaleHandler;
+import simplexity.simplelunchboxes.config.LocaleMessage;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 import simplexity.simplelunchboxes.inventory.PotionSashInventory;
 
@@ -42,10 +44,14 @@ public class PotionSashItem extends CustomItem {
     public void handleConsumption(PlayerItemConsumeEvent event) {
         ItemStack item = event.getItem();
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
-        assert uuidString != null;
+        if (uuidString == null) {
+            event.setCancelled(true);
+            return;
+        }
         ItemStack potion = PotionSashInventory.getInstance().selectPotion(UUID.fromString(uuidString));
         if (potion == null) {
             event.setCancelled(true);
+            event.getPlayer().sendMessage(LocaleHandler.getInstance().get(LocaleMessage.POTION_SASH_EMPTY));
             return;
         }
         event.setItem(potion);

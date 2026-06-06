@@ -8,6 +8,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.LocaleHandler;
+import simplexity.simplelunchboxes.config.LocaleMessage;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 
 public class EnderLunchboxItem extends CustomItem {
@@ -35,6 +37,7 @@ public class EnderLunchboxItem extends CustomItem {
         ItemStack food = LunchboxInventory.getInstance().selectEnderFood(event.getPlayer());
         if (food == null) {
             event.setCancelled(true);
+            event.getPlayer().sendMessage(LocaleHandler.getInstance().get(LocaleMessage.ENDER_LUNCHBOX_EMPTY));
             return;
         }
         event.setItem(food);

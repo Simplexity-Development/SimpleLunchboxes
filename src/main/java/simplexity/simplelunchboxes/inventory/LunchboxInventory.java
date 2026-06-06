@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import simplexity.simplelunchboxes.SimpleLunchboxes;
 import simplexity.simplelunchboxes.item.EnderLunchboxItem;
 import simplexity.simplelunchboxes.item.LunchboxItem;
 import simplexity.simplelunchboxes.util.CustomItemUtil;
@@ -30,10 +31,13 @@ public class LunchboxInventory extends CustomInventory {
     @Override
     public boolean openInventory(@Nullable ItemStack item, @NotNull Player player) {
         if (!LunchboxItem.getInstance().isThisItem(item)) return false;
-        assert item != null;
+        if (item == null) return false;
 
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
-        assert uuidString != null;
+        if (uuidString == null) {
+            SimpleLunchboxes.getPlugin().getLogger().warning("Lunchbox item missing UUID in persistent data.");
+            return false;
+        }
         UUID uuid = UUID.fromString(uuidString);
 
         Inventory inventory = loadInventory(uuid);

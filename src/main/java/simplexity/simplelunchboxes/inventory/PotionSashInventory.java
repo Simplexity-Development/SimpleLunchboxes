@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import simplexity.simplelunchboxes.SimpleLunchboxes;
 import simplexity.simplelunchboxes.item.PotionSashItem;
 import simplexity.simplelunchboxes.util.CustomItemUtil;
 
@@ -30,10 +31,13 @@ public class PotionSashInventory extends CustomInventory {
     @Override
     public boolean openInventory(@Nullable ItemStack item, @NotNull Player player) {
         if (!PotionSashItem.getInstance().isThisItem(item)) return false;
-        assert item != null;
+        if (item == null) return false;
 
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
-        assert uuidString != null;
+        if (uuidString == null) {
+            SimpleLunchboxes.getPlugin().getLogger().warning("Potion sash item missing UUID in persistent data.");
+            return false;
+        }
         UUID uuid = UUID.fromString(uuidString);
 
         Inventory inventory = loadInventory(uuid);

@@ -1,0 +1,7 @@
+lunchbox-empty: "<red>Your lunchbox is empty!"
+ender-lunchbox-empty: "<red>Your ender chest has no food!"
+potion-sash-empty: "<red>Your potion sash is empty!"
+give-success: "<green>Gave <white><item></white> to <white><player></white>."
+give-no-player: "<red>You must specify a player when running this from console."
+give-invalid-item: "<red>Unknown item type. Valid types: lunchbox, gluttonous_lunchbox, ender_lunchbox, gluttonous_ender_lunchbox, potion_sash."
+reload-success: "<green>SimpleLunchboxes config and locale reloaded."

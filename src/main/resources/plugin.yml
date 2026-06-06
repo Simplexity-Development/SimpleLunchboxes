@@ -2,6 +2,10 @@ name: SimpleLunchboxes
 version: '${project.version}'
 main: simplexity.simplelunchboxes.SimpleLunchboxes
 api-version: '1.21'
-commands:
-  giveqolfood:
-    description: "Testing command for Simple QoL Food"
+permissions:
+  simplelunchboxes.give:
+    description: "Allows using /simplelunchboxes give"
+    default: op
+  simplelunchboxes.reload:
+    description: "Allows using /simplelunchboxes reload"
+    default: op

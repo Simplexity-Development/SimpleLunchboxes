@@ -16,6 +16,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.LocaleHandler;
+import simplexity.simplelunchboxes.config.LocaleMessage;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 
 import java.util.UUID;
@@ -58,10 +60,14 @@ public class LunchboxItem extends CustomItem {
     public void handleConsumption(PlayerItemConsumeEvent event) {
         ItemStack item = event.getItem();
         String uuidString = item.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
-        assert uuidString != null;
+        if (uuidString == null) {
+            event.setCancelled(true);
+            return;
+        }
         ItemStack food = LunchboxInventory.getInstance().selectLunchboxFood(UUID.fromString(uuidString));
         if (food == null) {
             event.setCancelled(true);
+            event.getPlayer().sendMessage(LocaleHandler.getInstance().get(LocaleMessage.LUNCHBOX_EMPTY));
             return;
         }
         event.setItem(food);

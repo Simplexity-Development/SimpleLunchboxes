@@ -46,7 +46,8 @@ public abstract class CustomInventory {
                 dataFile.createNewFile();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            SimpleLunchboxes.getPlugin().getLogger().severe("Failed to create data file: " + fileName);
+            SimpleLunchboxes.getPlugin().getLogger().severe(e.getMessage());
         }
         reloadYml();
     }
@@ -69,7 +70,7 @@ public abstract class CustomInventory {
             int position = Integer.parseInt(key);
             ItemStack itemStack = items.getItemStack(key);
             if (position >= inv.getSize()) {
-                SimpleLunchboxes.getPlugin().getLogger().warning("Lunchbox (UUID: " + uuid + ") attempted to place an item stack in position " + position + " but the lunchbox is too small.");
+                SimpleLunchboxes.getPlugin().getLogger().warning("Inventory (UUID: " + uuid + ") attempted to place an item in position " + position + " but the inventory is too small.");
                 continue;
             }
             inv.setItem(position, itemStack);
@@ -88,22 +89,28 @@ public abstract class CustomInventory {
         setInventoryTier(uuid, tier);
     }
 
-    protected ConfigurationSection getInventory(UUID uuid) {
+    protected @NotNull ConfigurationSection getInventory(@NotNull UUID uuid) {
         if (!yml.contains(uuid.toString())) {
             return yml.createSection(uuid.toString());
         }
         ConfigurationSection section = yml.getConfigurationSection(uuid.toString());
-        assert section != null;
+        if (section == null) {
+            SimpleLunchboxes.getPlugin().getLogger().warning("Inventory section for UUID " + uuid + " was null; recreating.");
+            return yml.createSection(uuid.toString());
+        }
         return section;
     }
 
-    protected ConfigurationSection getInventoryItems(UUID uuid) {
+    protected @NotNull ConfigurationSection getInventoryItems(@NotNull UUID uuid) {
         ConfigurationSection section = getInventory(uuid);
         if (!section.contains("items")) {
             return section.createSection("items");
         }
         ConfigurationSection items = section.getConfigurationSection("items");
-        assert items != null;
+        if (items == null) {
+            SimpleLunchboxes.getPlugin().getLogger().warning("Items section for UUID " + uuid + " was null; recreating.");
+            return section.createSection("items");
+        }
         return items;
     }
 
@@ -133,7 +140,7 @@ public abstract class CustomInventory {
         return true;
     }
 
-    public void closeInventory(Inventory inv) {
+    public void closeInventory(@NotNull Inventory inv) {
         if (!isThisInventory(inv)) return;
         if (inv.getViewers().size() > 1) return;    // (?) Viewers == 1 when last person is closing the inventory.
         UUID uuid = null;
@@ -148,11 +155,11 @@ public abstract class CustomInventory {
         openInventories.remove(uuid);
     }
 
-    public boolean isThisInventory(Inventory inv) {
+    public boolean isThisInventory(@NotNull Inventory inv) {
         return openInventories.containsValue(inv);
     }
 
-    protected void saveInventory(Inventory inv, UUID uuid) {
+    protected void saveInventory(@NotNull Inventory inv, @NotNull UUID uuid) {
         ConfigurationSection section = getInventory(uuid);
         section.set("items", null);
         ConfigurationSection items = getInventoryItems(uuid);
@@ -169,12 +176,18 @@ public abstract class CustomInventory {
 
     protected void saveYml() {
         try { yml.save(dataFile); }
-        catch (IOException e) { e.printStackTrace(); }
+        catch (IOException e) {
+            SimpleLunchboxes.getPlugin().getLogger().severe("Failed to save " + fileName);
+            SimpleLunchboxes.getPlugin().getLogger().severe(e.getMessage());
+        }
     }
 
     protected void reloadYml() {
         try { yml.load(dataFile); }
-        catch (IOException | InvalidConfigurationException e) { e.printStackTrace(); }
+        catch (IOException | InvalidConfigurationException e) {
+            SimpleLunchboxes.getPlugin().getLogger().severe("Failed to load " + fileName);
+            SimpleLunchboxes.getPlugin().getLogger().severe(e.getMessage());
+        }
     }
 
     public void closeAll() {
