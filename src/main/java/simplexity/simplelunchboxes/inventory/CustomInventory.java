@@ -117,7 +117,7 @@ public abstract class CustomInventory {
 
     protected void setInventoryTier(@NotNull UUID uuid, int tier) {
         ConfigurationSection section = getInventory(uuid);
-        if (!section.contains("tier")) section.set("tier", tier);
+        section.set("tier", tier);
         saveYml();
     }
 
@@ -143,6 +143,7 @@ public abstract class CustomInventory {
                 break;
             }
         }
+        if (uuid == null) return;
         saveInventory(inv, uuid);
         openInventories.remove(uuid);
     }

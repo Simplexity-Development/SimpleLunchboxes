@@ -89,8 +89,9 @@ public class LunchboxInventory extends CustomInventory {
             if (!item.getType().isEdible()) continue;
             if (CustomItemUtil.isCustomItem(item)) continue;
 
+            ItemStack enderReturnItem = item.asOne();
             item.subtract();
-            return item.asOne();
+            return enderReturnItem;
         }
         return null;
     }
