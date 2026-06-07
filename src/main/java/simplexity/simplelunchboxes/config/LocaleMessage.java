@@ -10,7 +10,9 @@ public enum LocaleMessage {
     GIVE_SUCCESS("command.give.success", "<green>Gave <white><item></white> to <white><player></white>."),
     GIVE_NO_PLAYER("command.give.no-player", "<red>You must specify a player when running this from console."),
     GIVE_INVALID_ITEM("command.give.invalid-item", "<red>Unknown item type. Valid types: lunchbox, gluttonous_lunchbox, ender_lunchbox, gluttonous_ender_lunchbox, potion_sash."),
-    RELOAD_SUCCESS("command.reload.success", "<green>SimpleLunchboxes config and locale reloaded.");
+    RELOAD_SUCCESS("command.reload.success", "<green>SimpleLunchboxes config and locale reloaded."),
+    REFRESH_SUCCESS("command.refresh.success", "<green>Item refreshed."),
+    REFRESH_NOT_CUSTOM_ITEM("command.refresh.not-custom-item", "<red>You must be holding a SimpleLunchboxes item.");
 
     private final String path;
     private final String defaultMessage;

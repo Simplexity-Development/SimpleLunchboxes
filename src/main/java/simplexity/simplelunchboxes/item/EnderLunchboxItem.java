@@ -1,17 +1,23 @@
 package simplexity.simplelunchboxes.item;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.Consumable;
+import io.papermc.paper.datacomponent.item.FoodProperties;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.ConfigHandler;
+import simplexity.simplelunchboxes.config.ItemConfig;
 import simplexity.simplelunchboxes.config.LocaleHandler;
 import simplexity.simplelunchboxes.config.LocaleMessage;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 
+@SuppressWarnings("UnstableApiUsage")
 public class EnderLunchboxItem extends CustomItem {
 
     public static final NamespacedKey key = new NamespacedKey(SimpleLunchboxes.namespace, "ender_lunchbox");
@@ -25,9 +31,11 @@ public class EnderLunchboxItem extends CustomItem {
         return instance;
     }
 
-    private EnderLunchboxItem() {}
+    private EnderLunchboxItem() {
+        constructItems();
+    }
 
-    public ItemStack newItem(boolean gluttonous) {
+    public @NotNull ItemStack newItem(boolean gluttonous) {
         return (gluttonous ? gluttonousEnderLunchboxItem.asOne() : enderLunchboxItem.asOne());
     }
 
@@ -41,7 +49,16 @@ public class EnderLunchboxItem extends CustomItem {
             return;
         }
         event.setItem(food);
+        boolean gluttonous = item.getItemMeta().getPersistentDataContainer().has(gluttonousNsk);
+        ItemStack nextFood = LunchboxInventory.getInstance().peekEnderFood(event.getPlayer());
+        item.setData(DataComponentTypes.FOOD, buildFoodFor(nextFood, gluttonous));
+        float fill = LunchboxInventory.getInstance().getEnderFoodFill(event.getPlayer());
+        ItemConfig config = gluttonous
+                ? ConfigHandler.getInstance().getGluttonousEnderLunchboxConfig()
+                : ConfigHandler.getInstance().getEnderLunchboxConfig();
+        applyItemModel(item, config, fill);
         event.setReplacement(item);
+        LunchboxInventory.getInstance().returnEnderRemainder(event.getPlayer(), food);
     }
 
     @Override
@@ -53,20 +70,26 @@ public class EnderLunchboxItem extends CustomItem {
 
     @Override
     public void constructItems() {
+        ConfigHandler config = ConfigHandler.getInstance();
+        ItemConfig enderConfig = config.getEnderLunchboxConfig();
+        ItemConfig gluttonousConfig = config.getGluttonousEnderLunchboxConfig();
+        Consumable consumable = Consumable.consumable().build();
+
         // Ender Lunchbox
-        enderLunchboxItem = new ItemStack(Material.MELON_SLICE);
-        ItemMeta enderLunchboxItemMeta = enderLunchboxItem.getItemMeta();
-        enderLunchboxItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
-        enderLunchboxItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("Ender Lunchbox"));
-        // TODO: Custom Model Data Stuff
-        enderLunchboxItem.setItemMeta(enderLunchboxItemMeta);
+        enderLunchboxItem = new ItemStack(Material.STICK);
+        enderLunchboxItem.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true));
+        applyItemConfig(enderLunchboxItem, enderConfig);
+        enderLunchboxItem.setData(DataComponentTypes.CONSUMABLE, consumable);
+        enderLunchboxItem.setData(DataComponentTypes.FOOD, FoodProperties.food().canAlwaysEat(false).build());
 
         // Gluttonous Ender Lunchbox
-        gluttonousEnderLunchboxItem = new ItemStack(Material.GOLDEN_APPLE);
-        ItemMeta enderGluttonousLunchboxItemMeta = gluttonousEnderLunchboxItem.getItemMeta();
-        enderGluttonousLunchboxItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
-        enderGluttonousLunchboxItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("<aqua>Gluttonous Ender Lunchbox</aqua>"));
-        // TODO: Custom Model Data Stuff
-        gluttonousEnderLunchboxItem.setItemMeta(enderGluttonousLunchboxItemMeta);
+        gluttonousEnderLunchboxItem = new ItemStack(Material.STICK);
+        gluttonousEnderLunchboxItem.editMeta(meta -> {
+            meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
+            meta.getPersistentDataContainer().set(gluttonousNsk, PersistentDataType.BOOLEAN, true);
+        });
+        applyItemConfig(gluttonousEnderLunchboxItem, gluttonousConfig);
+        gluttonousEnderLunchboxItem.setData(DataComponentTypes.CONSUMABLE, consumable);
+        gluttonousEnderLunchboxItem.setData(DataComponentTypes.FOOD, FoodProperties.food().canAlwaysEat(true).build());
     }
 }

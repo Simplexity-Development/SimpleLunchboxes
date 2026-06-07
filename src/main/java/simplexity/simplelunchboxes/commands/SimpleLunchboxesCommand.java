@@ -5,16 +5,17 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import org.jetbrains.annotations.NotNull;
 import simplexity.simplelunchboxes.commands.subcommands.GiveSubcommand;
+import simplexity.simplelunchboxes.commands.subcommands.RefreshSubcommand;
 import simplexity.simplelunchboxes.commands.subcommands.ReloadSubcommand;
 
 import java.util.List;
 
-@SuppressWarnings("UnstableApiUsage")
 public class SimpleLunchboxesCommand {
 
     private static final List<SubCommand> subcommands = List.of(
             new GiveSubcommand(),
-            new ReloadSubcommand()
+            new ReloadSubcommand(),
+            new RefreshSubcommand()
     );
 
     /**

@@ -13,9 +13,7 @@ import simplexity.simplelunchboxes.item.LunchboxItem;
 import simplexity.simplelunchboxes.item.PotionSashItem;
 import simplexity.simplelunchboxes.listener.LunchboxListeners;
 import simplexity.simplelunchboxes.listener.PotionSashListeners;
-import simplexity.simplelunchboxes.util.SimpleLunchboxesPermission;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class SimpleLunchboxes extends JavaPlugin {
 
     public static final String namespace = "simplelunchboxes";
@@ -26,7 +24,6 @@ public final class SimpleLunchboxes extends JavaPlugin {
     public void onEnable() {
         plugin = this;
         miniMessage = MiniMessage.miniMessage();
-        registerPermissions();
         ConfigHandler.getInstance();
         LocaleHandler.getInstance();
         this.getServer().getPluginManager().registerEvents(new LunchboxListeners(), this);
@@ -47,12 +44,6 @@ public final class SimpleLunchboxes extends JavaPlugin {
         LunchboxItem.getInstance().constructItems();
         EnderLunchboxItem.getInstance().constructItems();
         PotionSashItem.getInstance().constructItems();
-    }
-
-    private void registerPermissions() {
-        for (SimpleLunchboxesPermission perm : SimpleLunchboxesPermission.values()) {
-            this.getServer().getPluginManager().addPermission(perm.getPermission());
-        }
     }
 
     public static SimpleLunchboxes getPlugin() { return plugin; }

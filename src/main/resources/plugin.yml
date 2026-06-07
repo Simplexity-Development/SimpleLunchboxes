@@ -1,7 +1,7 @@
 name: SimpleLunchboxes
 version: '${project.version}'
 main: simplexity.simplelunchboxes.SimpleLunchboxes
-api-version: '1.21'
+api-version: '26.1'
 permissions:
   simplelunchboxes.give:
     description: "Allows using /simplelunchboxes give"

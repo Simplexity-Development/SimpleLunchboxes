@@ -3,25 +3,23 @@ package simplexity.simplelunchboxes.item;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
 import io.papermc.paper.datacomponent.item.FoodProperties;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ItemType;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.ConfigHandler;
+import simplexity.simplelunchboxes.config.ItemConfig;
 import simplexity.simplelunchboxes.config.LocaleHandler;
 import simplexity.simplelunchboxes.config.LocaleMessage;
 import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 
 import java.util.UUID;
 
+@SuppressWarnings("UnstableApiUsage")
 public class LunchboxItem extends CustomItem {
 
     public static final NamespacedKey key = new NamespacedKey(SimpleLunchboxes.namespace, "lunchbox");
@@ -29,15 +27,6 @@ public class LunchboxItem extends CustomItem {
 
     private ItemStack lunchboxItem;
     private ItemStack gluttonousLunchboxItem;
-
-    @SuppressWarnings({"UnstableApiUsage"})
-    private Consumable consumable;
-    @SuppressWarnings({"UnstableApiUsage"})
-    private FoodProperties normalFoodProperties;
-    @SuppressWarnings({"UnstableApiUsage"})
-    private FoodProperties gluttonousFoodProperties;
-    private Component lunchboxName;
-    private Component gluttonousLunchboxName;
 
     private static LunchboxItem instance;
 
@@ -53,6 +42,19 @@ public class LunchboxItem extends CustomItem {
     public @NotNull ItemStack getLunchboxItem(int tier, boolean gluttonous, @Nullable UUID uuid) {
         ItemStack lunchbox = (gluttonous ? gluttonousLunchboxItem.asOne() : lunchboxItem.asOne());
         LunchboxInventory.getInstance().initializeInventory(lunchbox, tier, uuid);
+        // initializeInventory calls setItemMeta which resets the DataComponent patch — re-apply
+        lunchbox.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().build());
+        String uuidStr = lunchbox.getItemMeta().getPersistentDataContainer().get(uuidNsk, PersistentDataType.STRING);
+        UUID actualUuid = uuidStr != null ? UUID.fromString(uuidStr) : null;
+        ItemStack nextFood = actualUuid != null ? LunchboxInventory.getInstance().peekLunchboxFood(actualUuid) : null;
+        lunchbox.setData(DataComponentTypes.FOOD, buildFoodFor(nextFood, gluttonous));
+        if (actualUuid != null) {
+            float fill = LunchboxInventory.getInstance().getFoodFill(actualUuid);
+            ItemConfig config = gluttonous
+                    ? ConfigHandler.getInstance().getGluttonousLunchboxConfig()
+                    : ConfigHandler.getInstance().getLunchboxConfig();
+            applyItemModel(lunchbox, config, fill);
+        }
         return lunchbox;
     }
 
@@ -64,14 +66,24 @@ public class LunchboxItem extends CustomItem {
             event.setCancelled(true);
             return;
         }
-        ItemStack food = LunchboxInventory.getInstance().selectLunchboxFood(UUID.fromString(uuidString));
+        UUID uuid = UUID.fromString(uuidString);
+        ItemStack food = LunchboxInventory.getInstance().selectLunchboxFood(uuid);
         if (food == null) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(LocaleHandler.getInstance().get(LocaleMessage.LUNCHBOX_EMPTY));
             return;
         }
         event.setItem(food);
+        boolean gluttonous = item.getItemMeta().getPersistentDataContainer().has(gluttonousNsk);
+        ItemStack nextFood = LunchboxInventory.getInstance().peekLunchboxFood(uuid);
+        item.setData(DataComponentTypes.FOOD, buildFoodFor(nextFood, gluttonous));
+        float fill = LunchboxInventory.getInstance().getFoodFill(uuid);
+        ItemConfig config = gluttonous
+                ? ConfigHandler.getInstance().getGluttonousLunchboxConfig()
+                : ConfigHandler.getInstance().getLunchboxConfig();
+        applyItemModel(item, config, fill);
         event.setReplacement(item);
+        LunchboxInventory.getInstance().returnRemainder(uuid, event.getPlayer(), food);
     }
 
     @Override
@@ -82,42 +94,27 @@ public class LunchboxItem extends CustomItem {
     }
 
     @Override
-    @SuppressWarnings({"UnstableApiUsage", "DataFlowIssue"})
     public void constructItems() {
-        constructDataComponents();
+        ConfigHandler config = ConfigHandler.getInstance();
+        ItemConfig lunchboxConfig = config.getLunchboxConfig();
+        ItemConfig gluttonousConfig = config.getGluttonousLunchboxConfig();
+        Consumable consumable = Consumable.consumable().build();
 
         // Lunchbox
         lunchboxItem = new ItemStack(Material.STICK);
+        lunchboxItem.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true));
+        applyItemConfig(lunchboxItem, lunchboxConfig);
         lunchboxItem.setData(DataComponentTypes.CONSUMABLE, consumable);
-        lunchboxItem.setData(DataComponentTypes.FOOD, normalFoodProperties);
-        lunchboxItem.setData(DataComponentTypes.CUSTOM_NAME, lunchboxName);
-        lunchboxItem.setData(DataComponentTypes.ITEM_MODEL, Registry.ITEM.getKey(ItemType.BAMBOO_RAFT));
-        lunchboxItem.editMeta(itemMeta -> {
-            itemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
-            // TODO: Custom Model Data Stuff
-        });
+        lunchboxItem.setData(DataComponentTypes.FOOD, FoodProperties.food().canAlwaysEat(false).build());
 
         // Gluttonous Lunchbox
         gluttonousLunchboxItem = new ItemStack(Material.STICK);
-        gluttonousLunchboxItem.setData(DataComponentTypes.CONSUMABLE, consumable);
-        gluttonousLunchboxItem.setData(DataComponentTypes.FOOD, gluttonousFoodProperties);
-        gluttonousLunchboxItem.setData(DataComponentTypes.CUSTOM_NAME, gluttonousLunchboxName);
-        gluttonousLunchboxItem.setData(DataComponentTypes.ITEM_MODEL, Registry.ITEM.getKey(ItemType.BAMBOO_RAFT));
-        gluttonousLunchboxItem.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
-        gluttonousLunchboxItem.editMeta(itemMeta -> {
-            itemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
-            // TODO: Custom Model Data Stuff
+        gluttonousLunchboxItem.editMeta(meta -> {
+            meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
+            meta.getPersistentDataContainer().set(gluttonousNsk, PersistentDataType.BOOLEAN, true);
         });
-    }
-
-    @SuppressWarnings("UnstableApiUsage")
-    private void constructDataComponents() {
-        consumable = Consumable.consumable().build();
-
-        normalFoodProperties = FoodProperties.food().canAlwaysEat(false).build();
-        lunchboxName = Component.text("Lunchbox", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false);
-
-        gluttonousFoodProperties = FoodProperties.food().canAlwaysEat(true).build();
-        gluttonousLunchboxName = Component.text("Gluttonous Lunchbox", NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false);
+        applyItemConfig(gluttonousLunchboxItem, gluttonousConfig);
+        gluttonousLunchboxItem.setData(DataComponentTypes.CONSUMABLE, consumable);
+        gluttonousLunchboxItem.setData(DataComponentTypes.FOOD, FoodProperties.food().canAlwaysEat(true).build());
     }
 }

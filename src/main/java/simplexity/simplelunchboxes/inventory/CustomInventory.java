@@ -40,14 +40,19 @@ public abstract class CustomInventory {
     }
 
     private void init() {
-        try {
-            if (!dataFile.exists()) {
-                SimpleLunchboxes.getPlugin().getDataFolder().mkdir();
+        File parent = dataFile.getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) {
+            SimpleLunchboxes.getPlugin().getLogger().severe("Failed to create data folder for: " + fileName);
+            return;
+        }
+        if (!dataFile.exists()) {
+            try {
                 dataFile.createNewFile();
+            } catch (IOException e) {
+                SimpleLunchboxes.getPlugin().getLogger().severe("Failed to create data file: " + fileName);
+                SimpleLunchboxes.getPlugin().getLogger().severe(e.getMessage());
+                return;
             }
-        } catch (IOException e) {
-            SimpleLunchboxes.getPlugin().getLogger().severe("Failed to create data file: " + fileName);
-            SimpleLunchboxes.getPlugin().getLogger().severe(e.getMessage());
         }
         reloadYml();
     }
@@ -62,7 +67,6 @@ public abstract class CustomInventory {
     protected Inventory createInventory(UUID uuid) {
         ConfigurationSection items = getInventoryItems(uuid);
 
-        // TODO: Make name configurable.
         // TODO: Make Tier Slots configurable (ie Tier 1 has only 3 available slots).
         Inventory inv = Bukkit.createInventory(null, getInventoryTier(uuid)*9, Component.text(inventoryName));
 
@@ -114,7 +118,7 @@ public abstract class CustomInventory {
         return items;
     }
 
-    protected int getInventoryTier(@NotNull UUID uuid) {
+    public int getInventoryTier(@NotNull UUID uuid) {
         ConfigurationSection section = getInventory(uuid);
         if (!section.contains("tier")) {
             section.set("tier", 1);
@@ -128,16 +132,11 @@ public abstract class CustomInventory {
         saveYml();
     }
 
-    protected boolean upgradeInventoryTier(@NotNull UUID uuid) {
-        if (getInventoryTier(uuid) >= 6) return false;
-        if (openInventories.containsKey(uuid)) {
-            Inventory inv = openInventories.get(uuid);
-            inv.close();
-            saveInventory(inv, uuid);
-            openInventories.remove(uuid);
+    public @Nullable UUID getUuidForInventory(@NotNull Inventory inv) {
+        for (UUID search : openInventories.keySet()) {
+            if (openInventories.get(search).equals(inv)) return search;
         }
-        setInventoryTier(uuid, getInventoryTier(uuid) + 1);
-        return true;
+        return null;
     }
 
     public void closeInventory(@NotNull Inventory inv) {
@@ -155,6 +154,7 @@ public abstract class CustomInventory {
         openInventories.remove(uuid);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isThisInventory(@NotNull Inventory inv) {
         return openInventories.containsValue(inv);
     }

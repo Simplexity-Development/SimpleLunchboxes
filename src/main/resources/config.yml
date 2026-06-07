@@ -1,2 +1,52 @@
 # SimpleLunchboxes Configuration
 # This file is reloaded with /simplelunchboxes reload
+
+items:
+  lunchbox:
+    display-name: <!i><aqua>Lunchbox
+    glint: false
+    lore:
+      - <!i><gray>A trusty companion for long journeys.
+    item-model:
+      empty: minecraft:bamboo_raft
+      low: minecraft:bamboo_raft
+      high: minecraft:bamboo_raft
+  gluttonous-lunchbox:
+    display-name: <!i><light_purple>Gluttonous Lunchbox
+    glint: true
+    lore:
+      - <!i><gray>You can <i>always</i> eat more. <i><b>Always</i>.
+    item-model:
+      empty: minecraft:bamboo_raft
+      low: minecraft:bamboo_raft
+      high: minecraft:bamboo_raft
+  ender-lunchbox:
+    display-name: <!i><aqua>Ender Lunchbox
+    glint: false
+    lore:
+      - <!i><gray>You feel like you could reach
+      - <!i><gray>into the void to grab a snack.
+    item-model:
+      empty: minecraft:bamboo_raft
+      low: minecraft:bamboo_raft
+      high: minecraft:bamboo_raft
+  gluttonous-ender-lunchbox:
+    display-name: <!i><light_purple>Gluttonous Ender Lunchbox
+    glint: true
+    lore:
+      - <!i>Boundless hunger, boundless void.
+    item-model:
+      empty: minecraft:bamboo_raft
+      low: minecraft:bamboo_raft
+      high: minecraft:bamboo_raft
+  potion-sash:
+    display-name: <!i>Potion Sash
+    glint: false
+    lore:
+      - <!i><gray>A stylish sash loaded with
+      - <!i><gray>potions for any occasion.
+    max-stack-size: 3
+    item-model:
+      empty: minecraft:bundle
+      low: minecraft:bundle
+      high: minecraft:bundle

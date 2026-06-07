@@ -1,21 +1,26 @@
 package simplexity.simplelunchboxes.item;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.Consumable;
+import io.papermc.paper.datacomponent.item.UseRemainder;
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplelunchboxes.SimpleLunchboxes;
+import simplexity.simplelunchboxes.config.ConfigHandler;
 import simplexity.simplelunchboxes.config.LocaleHandler;
 import simplexity.simplelunchboxes.config.LocaleMessage;
-import simplexity.simplelunchboxes.inventory.LunchboxInventory;
 import simplexity.simplelunchboxes.inventory.PotionSashInventory;
 
 import java.util.UUID;
 
+@SuppressWarnings("UnstableApiUsage")
 public class PotionSashItem extends CustomItem {
 
     public static final NamespacedKey key = new NamespacedKey(SimpleLunchboxes.namespace, "potion_sash");
@@ -34,11 +39,12 @@ public class PotionSashItem extends CustomItem {
     }
 
     public @NotNull ItemStack getPotionSashItem(int tier, @Nullable UUID uuid) {
-        ItemStack potionSashItem = PotionSashItem.potionSashItem.asOne();
-        LunchboxInventory.getInstance().initializeInventory(potionSashItem, tier, uuid);
-        return potionSashItem;
+        ItemStack potionSash = PotionSashItem.potionSashItem.asOne();
+        PotionSashInventory.getInstance().initializeInventory(potionSash, tier, uuid);
+        // initializeInventory calls setItemMeta which resets the DataComponent patch — re-apply
+        potionSash.setData(DataComponentTypes.CONSUMABLE, drinkConsumable());
+        return potionSash;
     }
-
 
     @Override
     public void handleConsumption(PlayerItemConsumeEvent event) {
@@ -48,14 +54,18 @@ public class PotionSashItem extends CustomItem {
             event.setCancelled(true);
             return;
         }
-        ItemStack potion = PotionSashInventory.getInstance().selectPotion(UUID.fromString(uuidString));
+        UUID uuid = UUID.fromString(uuidString);
+        ItemStack potion = PotionSashInventory.getInstance().selectPotion(uuid);
         if (potion == null) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(LocaleHandler.getInstance().get(LocaleMessage.POTION_SASH_EMPTY));
             return;
         }
+        UseRemainder useRemainder = potion.getData(DataComponentTypes.USE_REMAINDER);
+        ItemStack remainder = useRemainder != null ? useRemainder.transformInto() : null;
         event.setItem(potion);
         event.setReplacement(item);
+        PotionSashInventory.getInstance().returnRemainder(uuid, event.getPlayer(), remainder);
     }
 
     @Override
@@ -67,12 +77,19 @@ public class PotionSashItem extends CustomItem {
 
     @Override
     public void constructItems() {
-        // Potion Sash
-        potionSashItem = new ItemStack(Material.POTION);
-        ItemMeta potionItemMeta = potionSashItem.getItemMeta();
-        potionItemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
-        potionItemMeta.displayName(SimpleLunchboxes.getMiniMessage().deserialize("Potion Sash"));
-        // TODO: Custom Model Data Stuff
-        potionSashItem.setItemMeta(potionItemMeta);
+        ConfigHandler config = ConfigHandler.getInstance();
+
+        potionSashItem = new ItemStack(Material.STICK);
+        potionSashItem.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true));
+        applyItemConfig(potionSashItem, config.getPotionSashConfig());
+        potionSashItem.setData(DataComponentTypes.CONSUMABLE, drinkConsumable());
+    }
+
+    /** Builds a {@link Consumable} that plays the drinking animation and sound. */
+    public static @NotNull Consumable drinkConsumable() {
+        return Consumable.consumable()
+                .animation(ItemUseAnimation.DRINK)
+                .sound(Key.key("entity.generic.drink"))
+                .build();
     }
 }

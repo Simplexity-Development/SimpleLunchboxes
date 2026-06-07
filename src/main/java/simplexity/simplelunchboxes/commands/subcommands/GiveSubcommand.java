@@ -1,7 +1,6 @@
 package simplexity.simplelunchboxes.commands.subcommands;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -22,49 +21,49 @@ import simplexity.simplelunchboxes.item.LunchboxItem;
 import simplexity.simplelunchboxes.item.PotionSashItem;
 import simplexity.simplelunchboxes.util.SimpleLunchboxesPermission;
 
-import java.util.List;
-
-@SuppressWarnings("UnstableApiUsage")
 public class GiveSubcommand implements SubCommand {
-
-    private static final List<String> ITEM_TYPES = List.of(
-            "lunchbox", "gluttonous_lunchbox", "ender_lunchbox", "gluttonous_ender_lunchbox", "potion_sash"
-    );
 
     @Override
     public @NotNull LiteralCommandNode<CommandSourceStack> build() {
         return Commands.literal("give")
                 .requires(source -> SimpleLunchboxesPermission.GIVE.hasPermission(source.getSender()))
-                .then(Commands.argument("item", StringArgumentType.word())
-                        .suggests((ctx, builder) -> {
-                            ITEM_TYPES.forEach(builder::suggest);
-                            return builder.buildFuture();
-                        })
-                        .then(Commands.argument("tier", IntegerArgumentType.integer(1, 6))
-                                .then(Commands.argument("player", ArgumentTypes.player())
-                                        .executes(ctx -> execute(ctx,
-                                                StringArgumentType.getString(ctx, "item"),
-                                                IntegerArgumentType.getInteger(ctx, "tier"),
-                                                ctx.getArgument("player", PlayerSelectorArgumentResolver.class)
-                                                        .resolve(ctx.getSource()).getFirst()
-                                        ))
-                                )
-                                .executes(ctx -> execute(ctx,
-                                        StringArgumentType.getString(ctx, "item"),
-                                        IntegerArgumentType.getInteger(ctx, "tier"),
-                                        null
-                                ))
-                        )
-                        .executes(ctx -> execute(ctx,
-                                StringArgumentType.getString(ctx, "item"),
-                                1,
-                                null
-                        ))
-                )
+                .then(tieredItemNode("lunchbox"))
+                .then(tieredItemNode("gluttonous_lunchbox"))
+                .then(tieredItemNode("potion_sash"))
+                .then(enderItemNode("ender_lunchbox"))
+                .then(enderItemNode("gluttonous_ender_lunchbox"))
                 .build();
     }
 
-    private int execute(@NotNull CommandContext<CommandSourceStack> ctx, @NotNull String itemType, int tier, @Nullable Player explicitTarget) {
+    /** Builds a subcommand node for a tiered item: [tier] [player]. */
+    private com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> tieredItemNode(@NotNull String name) {
+        return Commands.literal(name)
+                .then(Commands.argument("tier", IntegerArgumentType.integer(1, 6))
+                        .then(Commands.argument("player", ArgumentTypes.player())
+                                .executes(ctx -> give(ctx, name,
+                                        IntegerArgumentType.getInteger(ctx, "tier"),
+                                        ctx.getArgument("player", PlayerSelectorArgumentResolver.class)
+                                                .resolve(ctx.getSource()).getFirst()
+                                ))
+                        )
+                        .executes(ctx -> give(ctx, name, IntegerArgumentType.getInteger(ctx, "tier"), null))
+                )
+                .executes(ctx -> give(ctx, name, 1, null));
+    }
+
+    /** Builds a subcommand node for an ender item (no tier): [player]. */
+    private com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> enderItemNode(@NotNull String name) {
+        return Commands.literal(name)
+                .then(Commands.argument("player", ArgumentTypes.player())
+                        .executes(ctx -> give(ctx, name, 1,
+                                ctx.getArgument("player", PlayerSelectorArgumentResolver.class)
+                                        .resolve(ctx.getSource()).getFirst()
+                        ))
+                )
+                .executes(ctx -> give(ctx, name, 1, null));
+    }
+
+    private int give(@NotNull CommandContext<CommandSourceStack> ctx, @NotNull String itemType, int tier, @Nullable Player explicitTarget) {
         CommandSender sender = ctx.getSource().getSender();
 
         Player target = explicitTarget;
@@ -77,7 +76,7 @@ public class GiveSubcommand implements SubCommand {
             }
         }
 
-        ItemStack item = switch (itemType.toLowerCase()) {
+        ItemStack item = switch (itemType) {
             case "lunchbox" -> LunchboxItem.getInstance().getLunchboxItem(tier, false, null);
             case "gluttonous_lunchbox" -> LunchboxItem.getInstance().getLunchboxItem(tier, true, null);
             case "ender_lunchbox" -> EnderLunchboxItem.getInstance().newItem(false);
