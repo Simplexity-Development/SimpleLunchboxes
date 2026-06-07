@@ -2,6 +2,14 @@
   <table>
     <tr>
       <td valign="middle">
+        <img
+          width="120"
+          height="120"
+          alt=""
+          src="https://github.com/user-attachments/assets/45f1ee48-eb43-41d7-afa0-62a75b7bb7cd"
+        />
+      </td>
+      <td valign="middle">
         <h2>SimpleLunchboxes</h2>
         Portable food and potion storage for your adventures.<br>
         Right-click to eat, sneak + right-click to manage your inventory.
